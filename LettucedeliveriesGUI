@@ -1,0 +1,348 @@
+import java.awt.*;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import javax.swing.*;
+
+public class LettucedeliveriesGUI extends JFrame {
+
+    private ArrayList<Integer> netprofit = new ArrayList<>();
+    private JTextArea outputArea;
+    private String username;
+
+    private int runningexpenses = 20339;
+    private int carryamortiztion = 16700;
+    private int loanlettuce = 10000;
+    private int farmcaretakersalary = 4500;
+
+    public LettucedeliveriesGUI() {
+        showLoginScreen();
+    }
+
+    private void showLoginScreen() {
+        username = JOptionPane.showInputDialog(null, "Enter your username:");
+        if (username == null || username.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Username required!");
+            System.exit(0);
+        }
+        initUI();
+    }
+
+    private void initUI() {
+        setTitle("Lettuce Management System - Welcome " + username);
+        setSize(750, 480);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        Color softPink = new Color(255, 182, 193);
+        Color lightPink = new Color(255, 240, 245);
+        Color buttonPink = new Color(255, 105, 180);
+
+        RibbonPanel topPanel = new RibbonPanel();
+        topPanel.setLayout(new BorderLayout());
+
+        JLabel title = new JLabel("Welcome, " + username, JLabel.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setForeground(Color.WHITE);
+        topPanel.add(title, BorderLayout.CENTER);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.setBackground(lightPink);
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        outputArea = new JTextArea();
+        outputArea.setEditable(false);
+        outputArea.setFont(new Font("Segoe UI", Font.ROMAN_BASELINE, 13));
+        outputArea.setBackground(Color.WHITE);
+        outputArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(buttonPink, 1),
+                BorderFactory.createEmptyBorder(12, 10, 10, 10)));
+
+        centerPanel.add(new JScrollPane(outputArea), BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel(new GridLayout(4, 5, 12, 12));
+        buttonPanel.setBackground(softPink);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(50, 12, 50, 12));
+
+        JButton incomeBtn = create3DButton("Fast Income calculator");
+        JButton deliveryBtn = create3DButton("Delivery Tracker weekly");
+        JButton entityBtn = create3DButton("Business Entity");
+        JButton profitBtn = create3DButton("Profit Record");
+        JButton clearBtn = create3DButton("Clear Profit Records");
+        JButton exitBtn = create3DButton("Exit");
+
+        buttonPanel.add(incomeBtn);
+        buttonPanel.add(deliveryBtn);
+        buttonPanel.add(entityBtn);
+        buttonPanel.add(profitBtn);
+        buttonPanel.add(exitBtn);
+        buttonPanel.add(clearBtn);
+
+
+
+        add(buttonPanel, BorderLayout.EAST);
+
+        getContentPane().setBackground(softPink);
+
+        loadFromFile();
+
+        incomeBtn.addActionListener(e -> calculateIncome());
+        deliveryBtn.addActionListener(e -> recordDelivery());
+        entityBtn.addActionListener(e -> showBusinessEntity());
+        clearBtn.addActionListener(e -> clearProfitRecords());
+        profitBtn.addActionListener(e -> viewProfit());
+        exitBtn.addActionListener(e -> System.exit(0));
+    }
+
+    private JButton create3DButton(String text) {
+        JButton btn = new JButton(text) {
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                GradientPaint gp = new GradientPaint(0, 0, new Color(255, 105, 180),
+                        0, getHeight(), new Color(255, 182, 193));
+                g2.setPaint(gp);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
+
+                g2.setColor(new Color(255, 255, 255, 80));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight() / 2, 25, 25);
+
+                g2.setColor(new Color(255, 240, 245));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 25, 25);
+
+                super.paintComponent(g);
+                g2.dispose();
+            }
+        };
+
+        btn.setContentAreaFilled(false);
+        btn.setFocusPainted(false);
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        return btn;
+    }
+
+    class RibbonPanel extends JPanel {
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g;
+
+            GradientPaint gradient = new GradientPaint(0, 0, new Color(255, 105, 180),
+                    getWidth(), getHeight(), new Color(255, 182, 193));
+            g2.setPaint(gradient);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            g2.setColor(new Color(200, 80, 140));
+            g2.fillRect(0, getHeight() - 6, getWidth(), 6);
+
+            g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 120),
+                    0, getHeight() / 2, new Color(255, 255, 255, 0)));
+            g2.fillRect(0, 0, getWidth(), getHeight() / 2);
+        }
+
+        public Dimension getPreferredSize() {
+            return new Dimension(100, 65);
+        }
+    }
+    private void calculateIncome() {
+        try {
+            int gaisano = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter Gaisano income:"));
+            int publicMarket = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter Public Market income:"));
+            int Others = Integer.parseInt(JOptionPane.showInputDialog(this, "Other source of income:"));
+            int grossIncome = gaisano + publicMarket + Others;
+
+            // Subtract expenses one by one
+            int netincome = grossIncome;
+            netincome -= runningexpenses;
+            netincome -= carryamortiztion;
+            netincome -= loanlettuce;
+            netincome -= farmcaretakersalary;
+
+            int share = netincome / 2;
+            netprofit.add(netincome);
+
+            // Ask user if they want to input a custom date
+            String customDate = JOptionPane.showInputDialog(this, "Enter date (yyyy-MM-dd), or leave blank for today:");
+            if (customDate == null || customDate.trim().isEmpty()) {
+                customDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            }
+
+            outputArea.append("Date: " + customDate + "\n");
+            outputArea.append("User: " + username + "\n");
+            outputArea.append("Gross Income: " + grossIncome + "\n");
+            outputArea.append("Monthly Expenses:\n");
+            outputArea.append(" - Running Expenses: " + runningexpenses + " (Fuel, allowance, etc)\n");
+            outputArea.append(" - Carry Amortization: " + carryamortiztion + "\n");
+            outputArea.append(" - Loan Lettuce: " + loanlettuce + "\n");
+            outputArea.append(" - Farm care taker: " + farmcaretakersalary + "\n");
+            outputArea.append("Net Income: " + netincome + "\n");
+            outputArea.append("Your Share: " + share + "\n\n");
+
+            saveToFile(customDate, netincome);
+
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid input! Numbers only.");
+        }
+    }
+
+
+    private void recordDelivery() {
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"};
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+        outputArea.append("=== Weekly Delivery Report ===\n");
+        outputArea.append("Recorded on: " + date + "\n");
+
+        for (String day : days) {
+            int choice = JOptionPane.showConfirmDialog(this,
+                    "Was there a delivery on " + day + "?",
+                    "Delivery Check - " + day,
+                    JOptionPane.YES_NO_OPTION);
+
+            if (choice == JOptionPane.NO_OPTION) {
+                outputArea.append(day + ": No delivery\n");
+                continue;
+            }
+
+            try {
+                int delivered = Integer.parseInt(JOptionPane.showInputDialog(this,
+                        "Enter delivered quantity for " + day + ":"));
+                int bo = Integer.parseInt(JOptionPane.showInputDialog(this,
+                        "Enter B.O (damaged/rotten) for " + day + ":"));
+
+                int sales = (delivered - bo) * 40;
+
+                outputArea.append(day + ":\n");
+                outputArea.append(" - Delivered Lettuce: " + delivered + "\n");
+                outputArea.append(" - Rotten/Damaged Pullout: " + bo + "\n");
+                outputArea.append(" - Sales: " + sales + "\n\n");
+
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid input! Numbers only.");
+                outputArea.append(day + ": Invalid entry\n\n");
+            }
+        }
+
+        outputArea.append("=============================\n\n");
+    }
+
+    private void showBusinessEntity() {
+        ArrayList<String> names = new ArrayList<>();
+        ArrayList<Integer> costs = new ArrayList<>();
+
+        boolean addMore = true;
+
+        while (addMore) {
+            String name = JOptionPane.showInputDialog(this, "Enter entity/expense name:");
+            if (name == null || name.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Name required!");
+                continue;
+            }
+
+            try {
+                int cost = Integer.parseInt(JOptionPane.showInputDialog(this, "Enter cost for " + name + ":"));
+                names.add(name);
+                costs.add(cost);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid input! Numbers only.");
+            }
+
+            int choice = JOptionPane.showConfirmDialog(this, "Add another entity?", "Continue", JOptionPane.YES_NO_OPTION);
+            if (choice == JOptionPane.NO_OPTION) {
+                addMore = false;
+            }
+        }
+
+
+        outputArea.append("Business Entity Records:\n");
+        int total = 0;
+        for (int i = 0; i < names.size(); i++) {
+            outputArea.append(names.get(i) + " - " + costs.get(i) + "\n");
+            total += costs.get(i);
+        }
+
+        outputArea.append("Net Profit: " + (-total) + "\n\n");
+    }
+
+    private void viewProfit() {
+        outputArea.append("=== SAVED RECORDS ===\n");
+        try (BufferedReader reader = new BufferedReader(new FileReader("profit.txt"))) {
+            String line;
+            int recordNum = 1;
+            while ((line = reader.readLine()) != null) {
+                outputArea.append("Record " + recordNum + ": " + line + "\n");
+                recordNum++;
+
+            }
+        } catch (IOException e) {
+            outputArea.append("No saved records found.\n");
+        }
+        outputArea.append("----------------\n\n");
+    }
+    private void clearProfitRecords() {
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to clear all profit records?",
+                "Confirm Clear",
+                JOptionPane.YES_NO_OPTION);
+
+        if (choice == JOptionPane.YES_OPTION) {
+            netprofit.clear(); // clear in-memory list
+
+            // overwrite file with nothing
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter("profit.txt"))) {
+                writer.write("");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error clearing file!");
+            }
+
+            outputArea.append("All profit records have been cleared.\n\n");
+        }
+    }
+
+    private void saveToFile() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("profit.txt"))) {
+            for (int i = 0; i < netprofit.size(); i++) {
+                String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+                writer.write(date + " | " + netprofit.get(i) + "\n");
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving file!");
+        }
+    }
+    private void saveToFile(String date, int profit) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("profit.txt", true))) {
+            writer.write(date + " | " + profit + "\n");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(this, "Error saving file!");
+        }
+    }
+
+    private void loadFromFile() {
+        try (BufferedReader reader = new BufferedReader(new FileReader("profit.txt"))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Split into date and profit
+                String[] parts = line.split("\\|");
+                if (parts.length == 2) {
+                    try {
+                        int profit = Integer.parseInt(parts[1].trim());
+                        netprofit.add(profit);
+                    } catch (NumberFormatException e) {
+
+                    }
+                }
+            }
+        } catch (IOException e) {
+
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> new LettucedeliveriesGUI().setVisible(true));
+    }
+}
