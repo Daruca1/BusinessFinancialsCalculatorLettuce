@@ -1,1 +1,1 @@
-This project called "Pinky" aims to help people who are just starting up a business to calculate income, tracking deliveries and keeping records of the net profit.
+This project called "Pinky" aims to help people who are just starting up a business to calculate income, tracking deliveries and keeping records of the net profit. It is also flexible and can be reprogrammed easily to match customized needs for each business, We only used lettuce deliveries as a specific example of the usage of our programm, Thank you!
